@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "homepage.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -17,7 +18,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void changePage(int index);
+
 private:
     Ui::MainWindow *ui;
+    HomePage* homePage;
+
+    MediaController *mediaController;
 };
 #endif // MAINWINDOW_H
