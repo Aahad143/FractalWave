@@ -12,6 +12,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
+
+# Add JUCE as a dependency but prevent re-downloading every time
+set(FETCHCONTENT_QUIET OFF) # Show progress
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # Don't check for updates
+
+
+include(FetchContent)
+FetchContent_Declare(
+    JUCE
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG 7.0.5
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE # Store in a local directory
+)
+
+# Only necessary JUCE modules
+set(JUCE_BUILD_EXAMPLES OFF CACHE BOOL "Don't build JUCE examples")
+set(JUCE_BUILD_EXTRAS OFF CACHE BOOL "Don't build JUCE extras")
+set(JUCE_BUILD_TOOLS OFF CACHE BOOL "Don't build JUCE tools")
+
+FetchContent_MakeAvailable(JUCE)
+
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -23,6 +44,24 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(MusicPlayer
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        resourcecs.qrc
+        homepage.h homepage.cpp homepage.ui
+        styles/homepage.qss
+        CenteredItemDelegate.h
+        helper/qsshelper.h helper/sidebarhelper.h
+        mediacontroller.h mediacontroller.cpp
+        currenttracklistmanager.h currenttracklistmanager.cpp
+        audioplayback.h audioplayback.cpp
+        CircularBuffer.h
+        unitypage.h unitypage.cpp unitypage.ui
+        unityembedder.h unityembedder.cpp
+        Worker.h
+        player.h player.cpp player.ui
+        Worker.h
+        styles/player.qss styles/sidebar.qss
+        settingspage.h settingspage.cpp settingspage.ui
+        track.h
+        librarymanager.h librarymanager.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MusicPlayer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -42,7 +81,17 @@ else()
     endif()
 endif()
 
-target_link_libraries(MusicPlayer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(
+    MusicPlayer PRIVATE
+    juce::juce_audio_basics
+    juce::juce_audio_devices
+    juce::juce_audio_formats
+    juce::juce_audio_processors
+    juce::juce_audio_utils
+    juce::juce_core
+    juce::juce_dsp
+    Qt${QT_VERSION_MAJOR}::Widgets
+)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -63,6 +112,10 @@ install(TARGETS MusicPlayer
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+target_include_directories(MusicPlayer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)

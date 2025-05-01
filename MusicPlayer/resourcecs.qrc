@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>icons/home.png</file>
+        <file>icons/next.png</file>
+        <file>icons/play-button.png</file>
+        <file>icons/previous.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/visualizer.png</file>
+        <file>styles/homepage.qss</file>
+        <file>styles/player.qss</file>
+    </qresource>
+</RCC>

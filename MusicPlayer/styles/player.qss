@@ -1,0 +1,47 @@
+QFrame#player{
+    border: 1px solid #000;
+    border-radius: 0px;
+    background-color: #323232;
+}
+
+QPushButton#playBtn {
+    background-color: #92F005;   /* Green background */
+    border-radius: 25px;          /* Circular shape */
+    border: none;                /* No border */
+    width: 50px;                /* Button width */
+    height:50px;               /* Button height */
+    padding: 0;                  /* Remove internal padding */
+    icon: url(:/resources/icons/play-button.png); /* Play icon */
+    text-align: center;
+}
+
+QPushButton#playBtn:hover {
+    background-color: #FF00FB;   /* Darker green when hovered */
+}
+
+QPushButton#playBtn:pressed {
+    background-color: #c404c1;   /* Darker green when pressed */
+}
+
+QPushButton#previousBtn, QPushButton#nextBtn {
+    background-color: transparent;
+    border-radius: 10px;          /* Circular shape */
+    border: none;                /* No border */
+    width: 70px;                /* Button width */
+    height:50px;               /* Button height */
+    padding: 0;                  /* Remove internal padding */
+    icon-size: 30px 30px;  /* Set icon width and height */
+    text-align: center;
+}
+
+QPushButton#previousBtn {
+    icon: url(:/resources/icons/previous.png); /* prev icon */
+}
+
+QPushButton#nextBtn {
+    icon: url(:/resources/icons/next.png); /* next icon */
+}
+
+QPushButton#previousBtn:hover, QPushButton#nextBtn:hover {
+    background-color: #000000;   /* Darker green when hovered */
+}

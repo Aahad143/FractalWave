@@ -88,10 +88,10 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="HomePage" name="homePage"/>
-      <widget class="UnityPage" name="visualizerPage_3">
+      <widget class="UnityPage" name="visualizerPage">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -99,7 +99,7 @@
         </sizepolicy>
        </property>
       </widget>
-      <widget class="QWidget" name="settingsPage_3"/>
+      <widget class="SettingsPage" name="settingsPage"/>
      </widget>
     </item>
    </layout>
@@ -115,7 +115,13 @@
   <customwidget>
    <class>UnityPage</class>
    <extends>QWidget</extends>
-   <header location="global">unitypage.h</header>
+   <header>unitypage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SettingsPage</class>
+   <extends>QWidget</extends>
+   <header location="global">settingspage.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
