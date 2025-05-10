@@ -20,11 +20,11 @@ MediaController::~MediaController()
     delete audioPlayback;
 }
 
-void MediaController::initializePlaylist(const QString &musicDir)
+void MediaController::initializePlaylist(const QString &playlistName)
 {
-    qDebug() << "musicDir:" << musicDir;
+    qDebug() << "playlistName in mediaController:" << playlistName;
     // Scan the directory to populate the playlist.
-    currentTracklistManager->scanDirectory(musicDir);
+    currentTracklistManager->initializePlaylist(playlistName);
     qDebug() << "Playlist initialized with" << currentTracklistManager->getTracks().size() << "tracks.";
 }
 

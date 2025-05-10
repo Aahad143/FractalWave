@@ -3,7 +3,11 @@
 
 #include <QWidget>
 #include <qlistwidget.h>
+#include <qpushbutton.h>
+
 #include "mediacontroller.h"
+#include "addcontentform.h"
+#include "librarymanager.h"
 
 namespace Ui {
 class HomePage;
@@ -24,13 +28,24 @@ public:
 
 private slots:
     void on_currentTracklist_itemClicked(QListWidgetItem *item);
+    void on_listOfPlaylists_itemClicked(QListWidgetItem *item);
+    void on_listOfTracks_itemClicked(QListWidgetItem *item);
     void changePage(int index);
+
+protected:
+    void resizeEvent(QResizeEvent *event);
 
 private:
     Ui::HomePage *ui;
-    void displayTrackList(const QString &musicFolderPath);
+    void displayQueueTab(const QString &playlistName);
+    void displayPlaylistTab();
+    void displayFavouritesTab();
 
     MediaController *mediaController;
+
+    QPushButton *addContentBtn;
+    QWidget* overlay_;
+    AddContentForm *addContentForm;
 };
 
 #endif // HOMEPAGE_H

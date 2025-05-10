@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "helper/sidebarhelper.h"
+#include "librarymanager.h"
 #include <qevent.h>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -10,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
     , mediaController(nullptr)
 {
     ui->setupUi(this);
+
+    LibraryManager::instance().scanDirectory();
 
     // setup the music player
     mediaController = new MediaController(this);
@@ -79,6 +82,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::changePage(int index)
 {
+    // if (ui->visualizerPage) {
+    //     ui->visualizerPage->resizeWindow();
+    // }
     ui->stackedWidget->setCurrentIndex(index);
 }
 

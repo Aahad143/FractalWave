@@ -26,6 +26,7 @@ MusicPlayer/*.user*
 MusicPlayer/CMakeFiles/
 MusicPlayer/CMakeCache.txt
 MusicPlayer/cmake-build-*/
+MusicPlayer/external
 
 # --- UNITY PROJECT IGNORE ---
 Visualizer/[Ll]ibrary/
@@ -70,3 +71,6 @@ Visualizer/Assets/AssetStoreTools*
 
 # --- OPTIONAL: GIT FOLDER (if applicable) ---
 MusicPlayer/git/
+
+# Build output (your "New folder" artifacts)
+Visualizer/New\ folder/

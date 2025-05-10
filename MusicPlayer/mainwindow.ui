@@ -43,7 +43,7 @@
         <set>AlignCenter</set>
        </property>
        <property name="icon">
-        <iconset resource="resourcecs.qrc">
+        <iconset resource="resources.qrc">
          <normaloff>:/resources/icons/home.png</normaloff>:/resources/icons/home.png</iconset>
        </property>
       </item>
@@ -55,7 +55,7 @@
         <set>AlignCenter</set>
        </property>
        <property name="icon">
-        <iconset resource="resourcecs.qrc">
+        <iconset resource="resources.qrc">
          <normaloff>:/resources/icons/visualizer.png</normaloff>:/resources/icons/visualizer.png</iconset>
        </property>
       </item>
@@ -67,7 +67,7 @@
         <set>AlignCenter</set>
        </property>
        <property name="icon">
-        <iconset resource="resourcecs.qrc">
+        <iconset resource="resources.qrc">
          <normaloff>:/resources/icons/settings.png</normaloff>:/resources/icons/settings.png</iconset>
        </property>
       </item>
@@ -126,7 +126,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="resourcecs.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections/>
 </ui>

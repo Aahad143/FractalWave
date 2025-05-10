@@ -1,0 +1,23 @@
+QPushButton#addContent{
+    background-color: rgba(255, 0, 0, 20);
+}
+
+QFrame#addContentForm {
+    background-color: #333333;
+    border: 1px solid gray;
+    border-radius: 4px;
+}
+
+QWidget#overlay {
+  background-color: rgba(0, 0, 0, 128);
+}
+
+QWidget {
+    margin: 0;
+    padding: 0;
+}
+
+QFrame {
+    margin: 0;
+    padding: 0;
+}

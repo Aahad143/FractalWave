@@ -16,9 +16,6 @@ UnityPage::UnityPage(QWidget *parent)
     , unityEmbedder(nullptr)
 {
     ui->setupUi(this);
-    // Create the UnityEmbedder instance
-
-    // ui->activateVisualizer->setVisible(false);
 
     ui->loadingFrame->setFrameShape(QFrame::StyledPanel);
 
@@ -30,6 +27,7 @@ UnityPage::UnityPage(QWidget *parent)
     // Ensure the loading frame is on top
     ui->loadingFrame->raise();
 
+    // Create the UnityEmbedder instance
     unityEmbedder = new UnityEmbedder(embeddedFrame, "Visualizer", "Visualizer.exe");
 
     connect(ui->activateVisualizer, &QPushButton::pressed, this, &UnityPage::embedUnity);
@@ -118,7 +116,7 @@ void UnityPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 
     // make the unity embedded frame have the same position and size of the loadng frame for smooth transition
-    embeddedFrame->setGeometry( ui->loadingFrame->geometry() );
+    embeddedFrame->setGeometry( this->geometry() );
     if (unityEmbedder) {
         // Resize the Unity window to match this widget's new size.
         unityEmbedder->resizeToHost();

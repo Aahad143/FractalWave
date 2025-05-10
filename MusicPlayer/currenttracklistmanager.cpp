@@ -2,7 +2,9 @@
 #include <QDir>
 #include <QDebug>
 
-CurrentTracklistManager::CurrentTracklistManager() : currentIndex(-1)
+CurrentTracklistManager::CurrentTracklistManager() :
+    currentIndex(-1),
+    currentPlaylist("")
 {
 }
 
@@ -14,7 +16,7 @@ void CurrentTracklistManager::scanDirectory(const QString &directoryPath)
 {
     QDir dir(directoryPath);
     QStringList filters;
-    filters << "*.mp3" << "*.wav" << "*.flac" << "*.ogg";
+    filters << "*.mp3" << "*.wav" << "*.flac" << "*.ogg" << "*.opus";
     dir.setNameFilters(filters);
 
     tracks.clear();
@@ -35,6 +37,30 @@ void CurrentTracklistManager::scanDirectory(const QString &directoryPath)
         currentIndex = -1;
 }
 
+void CurrentTracklistManager::initializePlaylist(const QString& playlistName)
+{
+    QDir musicDir(LibraryManager::instance().getCorrentMusicDirectory());
+    // 1) fetch the file-paths from LibraryManager
+    QStringList trackNames =
+        LibraryManager::instance().getTracksFromPlaylist(playlistName);
+
+    // 2) reset our internal Playlist
+    currentPlaylist.clear();
+    currentPlaylist.setName(playlistName);
+
+    // 3) build Track objects and add them
+    for (const QString& trackName : trackNames)
+    {
+        Track t;
+        t.filePath = musicDir.filePath(trackName);
+        t.title    = QFileInfo(trackName).baseName();
+        currentPlaylist.addTrack(t);
+    }
+
+    // emit playlistChanged(playlistName);
+}
+
+
 QList<Track> CurrentTracklistManager::getTracks() const
 {
     return tracks;
@@ -47,35 +73,39 @@ int CurrentTracklistManager::getCurrentIndex() const
 
 bool CurrentTracklistManager::setCurrentIndex(int index)
 {
-    if (index >= 0 && index < tracks.size()) {
+    if (index >= 0 && index < currentPlaylist.size()) {
         currentIndex = index;
         return true;
     }
-    qDebug() << "tracks.size():" << tracks.size();
+    qDebug() << "currentPlaylist.size():" << currentPlaylist.size();
     return false;
 }
 
 Track CurrentTracklistManager::getCurrentTrack() const
 {
-    if (currentIndex >= 0 && currentIndex < tracks.size())
-        return tracks.at(currentIndex);
+    if (currentIndex >= 0 && currentIndex < currentPlaylist.size())
+        return currentPlaylist.at(currentIndex);
     return Track();
 }
 
 bool CurrentTracklistManager::nextTrack()
 {
-    if (currentIndex + 1 < tracks.size()) {
+    if (currentIndex + 1 < currentPlaylist.size()) {
         ++currentIndex;
-        return true;
     }
-    return false;
+    else {
+        currentIndex = 0;
+    }
+    return true;
 }
 
 bool CurrentTracklistManager::previousTrack()
 {
     if (currentIndex - 1 >= 0) {
         --currentIndex;
-        return true;
     }
-    return false;
+    else {
+        currentIndex = currentPlaylist.size()-1;
+    }
+    return true;
 }

@@ -17,6 +17,10 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 set(FETCHCONTENT_QUIET OFF) # Show progress
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # Don't check for updates
 
+set(JUCE_AUDIO_FORMATS_FFMPEG ON CACHE BOOL "Enable FFmpeg audio format" FORCE)
+
+message(STATUS "Top level build dir: ${CMAKE_BINARY_DIR}")
+message(STATUS "This CMakeLists build dir: ${CMAKE_CURRENT_BINARY_DIR}")
 
 include(FetchContent)
 FetchContent_Declare(
@@ -44,7 +48,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(MusicPlayer
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        resourcecs.qrc
+        resources.qrc
         homepage.h homepage.cpp homepage.ui
         styles/homepage.qss
         CenteredItemDelegate.h
@@ -62,6 +66,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         settingspage.h settingspage.cpp settingspage.ui
         track.h
         librarymanager.h librarymanager.cpp
+        playlist.h playlist.cpp
+        addcontentform.h addcontentform.cpp addcontentform.ui
+        helper/directoryhelper.h
+        TrackItemDelegate.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MusicPlayer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -91,6 +99,24 @@ target_link_libraries(
     juce::juce_core
     juce::juce_dsp
     Qt${QT_VERSION_MAJOR}::Widgets
+)
+
+set(FFMPEG_ROOT "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg")
+message(STATUS "This ffmpeg build dir: ${FFMPEG_ROOT}")
+find_library(AVFORMAT    avformat    PATHS "${FFMPEG_ROOT}/lib")
+find_library(AVCODEC     avcodec     PATHS "${FFMPEG_ROOT}/lib")
+find_library(AVUTIL      avutil      PATHS "${FFMPEG_ROOT}/lib")
+find_library(SWRESAMPLE  swresample  PATHS "${FFMPEG_ROOT}/lib")
+
+target_include_directories(MusicPlayer PRIVATE
+  ${FFMPEG_ROOT}/include
+)
+
+target_link_libraries(MusicPlayer PRIVATE
+    ${AVFORMAT}
+    ${AVCODEC}
+    ${AVUTIL}
+    ${SWRESAMPLE}
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
