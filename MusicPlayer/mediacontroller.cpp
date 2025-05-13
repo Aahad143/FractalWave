@@ -56,7 +56,7 @@ bool MediaController::loadAndPlayTrack(int index)
     qDebug().noquote() << "audioPlayback->getCurrentTrackPath():" << audioPlayback->getCurrentTrackPath()
                        << "\ncurrentTrack.filePath:" << currentTrack.filePath;
     if (audioPlayback->getCurrentTrackPath() == currentTrack.filePath) {
-        audioPlayback->togglePause();
+        this->togglePause();
         return true;
     }
 

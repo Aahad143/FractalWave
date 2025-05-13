@@ -89,7 +89,6 @@ void AudioPlayback::unloadFile()
 // play(): Starts playback by resetting position and starting the transport.
 void AudioPlayback::play()
 {
-    transportSource.setPosition(0.0);
     transportSource.start();
 }
 

@@ -40,7 +40,28 @@ public:
 
     void setTracklist(QListWidget *tracklist);
 
-    // void updateFFTData();
+    bool isPlaying()
+    {
+        return audioPlayback->isPlaying();
+    }
+
+    void togglePause()
+    {
+        if (audioPlayback->isPlaying()){
+            audioPlayback->stop();
+            emit paused(audioPlayback->getCurrentTrackPath());
+        }
+        else
+        {
+            audioPlayback->play();
+            emit playing(audioPlayback->getCurrentTrackPath());
+        }
+    }
+
+signals:
+    void paused(const QString& trackPath = nullptr);
+    void playing(const QString& trackPath = nullptr);
+
 private:
     CurrentTracklistManager *currentTracklistManager;
     AudioPlayback *audioPlayback;

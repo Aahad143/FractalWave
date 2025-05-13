@@ -183,30 +183,22 @@ bool LibraryManager::addTrackToDIr(const QString& youtubeUrl)
     qDebug() << "Will download to:" << inputPath ;
 
     // 2) then actually download it there
-    downloadVideo(ytdlpPath_, youtubeUrl, currentMusicDirectory);
+    if (downloadVideo(ytdlpPath_, youtubeUrl, currentMusicDirectory)) {
+        QMessageBox::critical(nullptr, tr("Download failed"),
+                              tr("Make sure the link is a valid YouTube link."));
+        return false;
+    }
+
     qDebug() << "Download finished!";
 
     int dotIndex = inputPath .lastIndexOf('.');
     QString outputPath = (dotIndex != -1) ? inputPath .left(dotIndex) + ".ogg" : inputPath  + ".ogg";
 
-    qDebug() << "inputPath in addTrackToDir:" << inputPath;
-    qDebug() << "outputPath in addTrackToDir:" << outputPath;
-    // 3) Run ffmpeg
-    QProcess ff;
-    QStringList args = {
-        "-y",
-        "-i", inputPath,
-        "-vn",
-        "-c:a", "libvorbis",
-        "-q:a", "10",
-        outputPath
-    };
-    ff.start(ffmpegPath_, args);
-    if (!ff.waitForFinished(-1) ||
-        ff.exitStatus() != QProcess::NormalExit ||
-        ff.exitCode()   != 0)
+    // 3) remux the .mp4 file into .ogg format
+    if (remuxVideo(inputPath, outputPath))
     {
-        qWarning() << "ffmpeg failed:" << ff.readAllStandardError();
+        QMessageBox::critical(nullptr, tr("FFmpeg remux failed"),
+                              tr("Video file doesn't exist or is malformed."));
         return false;
     }
 
@@ -254,7 +246,7 @@ QString LibraryManager::getOutputFilename(const QString& ytdlpPath,
     return QDir(outputFolder).filePath(filename);
 }
 
-void LibraryManager::downloadVideo(const QString& ytdlpPath,
+bool LibraryManager::downloadVideo(const QString& ytdlpPath,
                    const QString& youtubeUrl,
                    const QString& outputFolder)
 {
@@ -262,13 +254,40 @@ void LibraryManager::downloadVideo(const QString& ytdlpPath,
     QStringList args;
     args << "-o" << (outputFolder + "/%(title)s.%(ext)s")
          << "--merge-output-format" << "mp4"
+        << "--add-metadata"
+        << "--embed-thumbnail"
          << youtubeUrl;
 
     p.start(ytdlpPath, args);
     if (!p.waitForFinished(-1))
         throw std::runtime_error("yt-dlp download failed or was interrupted");
+        return false;
 
-    // at this point, the file really is at outputFolder/title.mp4
+    return true;
+}
+
+bool LibraryManager::remuxVideo(const QString& inputPath, const QString& outputPath)
+{
+    QProcess ff;
+    QStringList args = {
+        "-y",
+        "-i", inputPath,
+        "-map_metadata", "0",       // copy all global metadata from input
+        "-vn",
+        "-c:a", "libvorbis",
+        "-q:a", "10",
+        outputPath
+    };
+    ff.start(ffmpegPath_, args);
+    if (!ff.waitForFinished(-1) ||
+        ff.exitStatus() != QProcess::NormalExit ||
+        ff.exitCode()   != 0)
+    {
+        qWarning() << "ffmpeg failed:" << ff.readAllStandardError();
+        return false;
+    }
+
+    return true;
 }
 
 bool LibraryManager::saveJson(const QJsonObject& root)
