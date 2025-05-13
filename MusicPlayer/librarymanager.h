@@ -91,9 +91,11 @@ private:
                                               const QString& youtubeUrl,
                                               const QString& outputFolder);
 
-    void downloadVideo(const QString& ytdlpPath,
+    bool downloadVideo(const QString& ytdlpPath,
                                        const QString& youtubeUrl,
                        const QString& outputFolder);
+
+    bool remuxVideo(const QString& inputPath, const QString& outputPath);
 
 };
 

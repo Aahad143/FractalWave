@@ -80,7 +80,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="queue">
          <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -100,7 +100,11 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QListWidget" name="currentTracklist"/>
+           <widget class="QListWidget" name="currentTracklist">
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -122,7 +126,37 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QListWidget" name="listOfPlaylists"/>
+           <widget class="QFrame" name="frame">
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QListWidget" name="listOfPlaylists"/>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listOfTracks"/>
+             </item>
+            </layout>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -149,9 +183,6 @@
          </layout>
         </widget>
        </widget>
-      </item>
-      <item>
-       <widget class="QListWidget" name="listOfTracks"/>
       </item>
      </layout>
     </widget>

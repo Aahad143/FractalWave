@@ -8,5 +8,11 @@
         <file>icons/visualizer.png</file>
         <file>styles/homepage.qss</file>
         <file>styles/player.qss</file>
+        <file>icons/overflow.png</file>
+        <file>icons/heart-empty.png</file>
+        <file>icons/heart-filled.png</file>
+        <file>icons/play-button-white.png</file>
+        <file>icons/pause-button.png</file>
+        <file>icons/pause-button-white.png</file>
     </qresource>
 </RCC>

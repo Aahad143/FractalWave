@@ -103,7 +103,7 @@ void Player::onPlayButtonClicked()
         return;
     }
 
-    audioPlayback->togglePause();  // Pause if playing
+    mediaController->togglePause();
 }
 
 void Player::onNextButtonClicked()

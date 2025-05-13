@@ -26,6 +26,11 @@ public:
         // mediaController->initializePlaylist("C:\\Users\\aahad\\Music");
     }
 
+    void handleFromCurrentTrackList(int row);
+    void handleFromListOfTracks(int row);
+    void handlePause(const QString& trackPath = nullptr);
+    void handleResume(const QString& trackPath = nullptr);
+
 private slots:
     void on_currentTracklist_itemClicked(QListWidgetItem *item);
     void on_listOfPlaylists_itemClicked(QListWidgetItem *item);
@@ -33,13 +38,15 @@ private slots:
     void changePage(int index);
 
 protected:
-    void resizeEvent(QResizeEvent *event);
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     Ui::HomePage *ui;
     void displayQueueTab(const QString &playlistName);
     void displayPlaylistTab();
     void displayFavouritesTab();
+
+    bool togglePlay;
 
     MediaController *mediaController;
 
