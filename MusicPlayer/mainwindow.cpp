@@ -96,6 +96,10 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
         // Convert local coordinates to global screen coordinates
         // QPoint globalPos = this->mapToGlobal(QPoint(0, newSize.height() - player->height()));
 
+        if (ui->visualizerPage) {
+            ui->visualizerPage->resizeWindow();
+        }
+
         // Set the player's geometry using global coordinates
         player->setGeometry(0, newSize.height() - player->height(), newSize.width(), player->height());
     }

@@ -63,31 +63,31 @@ void UnityPage::embedUnity(){
             workerThread->start();
         }
         \
-            // When finished, signal back to the main thread
-            connect(worker, &Worker::finished, this, [this]() {
-                // Perform any post-embedding UI updates
-                unityEmbedder->debugWindowHierarchy();
+        // When finished, signal back to the main thread
+        connect(worker, &Worker::finished, this, [this]() {
+            // Perform any post-embedding UI updates
+            unityEmbedder->debugWindowHierarchy();
 
-                QFrame *lf = ui->loadingFrame;
-                QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(lf);
-                lf->setGraphicsEffect(effect);
+            QFrame *lf = ui->loadingFrame;
+            QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(lf);
+            lf->setGraphicsEffect(effect);
 
-                QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity", lf);
-                anim->setDuration(500);
-                anim->setStartValue(1.0);
-                anim->setEndValue(0.0);
+            QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity", lf);
+            anim->setDuration(500);
+            anim->setStartValue(1.0);
+            anim->setEndValue(0.0);
 
-                // When the animation finishes, hide & clean up *lf*
-                connect(anim, &QPropertyAnimation::finished, lf, [lf]() {
-                    lf->setVisible(false);
-                    lf->setGraphicsEffect(nullptr);
-                });
-
-                // and start it
-                anim->start(QAbstractAnimation::DeleteWhenStopped);
-
-                qDebug() << "Unity embedded successfully.";
+            // When the animation finishes, hide & clean up *lf*
+            connect(anim, &QPropertyAnimation::finished, lf, [lf]() {
+                lf->setVisible(false);
+                lf->setGraphicsEffect(nullptr);
             });
+
+            // and start it
+            anim->start(QAbstractAnimation::DeleteWhenStopped);
+
+            qDebug() << "Unity embedded successfully.";
+        });
 
         // If there is an error, log it
         connect(worker, &Worker::error, this, [this](const QString &err){
