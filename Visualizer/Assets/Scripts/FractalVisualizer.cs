@@ -1,28 +1,48 @@
 using UnityEngine;
 using System;
 using System.IO.MemoryMappedFiles;
-using UnityEngine.UI;  // for UI Text
+using UnityEngine.UI;  // only if you still use UI.Text
 
-public class FFTReader
+public class FFTReader : IDisposable
 {
     private const string SHM_NAME = "Local\\FractalWaveFFT";
-    private const int BAND_COUNT = 7; // same as NumBands in C++
+    private const int BAND_COUNT = 16;
     private MemoryMappedFile mmf;
     private MemoryMappedViewAccessor accessor;
+    private bool _isValid;
+
+    public bool IsValid => _isValid;
 
     public FFTReader()
     {
-        // Open the existing mapping (must match C++ name)
-        mmf = MemoryMappedFile.OpenExisting(SHM_NAME, MemoryMappedFileRights.Read);
-        accessor = mmf.CreateViewAccessor(0, BAND_COUNT * sizeof(float), MemoryMappedFileAccess.Read);
+        try
+        {
+            mmf = MemoryMappedFile.OpenExisting(SHM_NAME, MemoryMappedFileRights.Read);
+            accessor = mmf.CreateViewAccessor(0, BAND_COUNT * sizeof(float), MemoryMappedFileAccess.Read);
+            _isValid = true;
+        }
+        catch (Exception e)
+        {
+            // Could not open the MMF (not found, no rights, etc.)
+            Debug.LogWarning($"FFTReader: shared memory '{SHM_NAME}' unavailable: {e.Message}");
+            _isValid = false;
+        }
     }
 
     public float[] ReadBands()
     {
         var bands = new float[BAND_COUNT];
-        for (int i = 0; i < BAND_COUNT; ++i)
+        if (!_isValid) return bands;
+
+        try
         {
-            bands[i] = accessor.ReadSingle(i * sizeof(float));
+            for (int i = 0; i < BAND_COUNT; ++i)
+                bands[i] = accessor.ReadSingle(i * sizeof(float));
+        }
+        catch
+        {
+            // If any read fails, mark invalid so future calls are no‑ops
+            _isValid = false;
         }
         return bands;
     }
@@ -31,33 +51,25 @@ public class FFTReader
     {
         accessor?.Dispose();
         mmf?.Dispose();
+        accessor = null;
+        mmf = null;
+        _isValid = false;
     }
 }
 
 public class FractalVisualizer : MonoBehaviour
 {
     private FFTReader _fftReader;
-    // assign these in the Inspector: 7 Text elements for your 7 bands
-    public Text[] bandTexts;
+    public Text[] bandTexts;  // if you still use UI.Text
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _fftReader = new FFTReader();
     }
 
-    // Update is called once per frame
-    void Update()
+    void OnDestroy()
     {
-        // float[] bands = _fftReader.ReadBands();
-
-        // // safety check
-        // int count = Mathf.Min(bands.Length, bandTexts.Length);
-        // for (int i = 0; i < count; ++i)
-        // {
-        //     // Format to 2 decimal places
-        //     bandTexts[i].text = $"{bands[i]:F2}";
-        // }
+        _fftReader?.Dispose();
     }
 
     void OnGUI()
@@ -65,9 +77,10 @@ public class FractalVisualizer : MonoBehaviour
         float[] bands = _fftReader.ReadBands();
         for (int i = 0; i < bands.Length; ++i)
         {
-            // Draw at (10,10), (10,30), (10,50), etc.
-            GUI.Label(new Rect(10, 10 + i * 20, 200, 20),
-                    $"Band {i}: {bands[i]:F2}");
+            string label = _fftReader.IsValid
+                ? $"Band {i}: {bands[i]:F2}"
+                : $"Band {i}: (no data)";
+            GUI.Label(new Rect(10, 10 + i * 20, 200, 20), label);
         }
     }
 }

@@ -26,93 +26,228 @@ LibraryManager::LibraryManager(QObject *parent)
 bool LibraryManager::scanDirectory()
 {
     qDebug() << "Scanning directory";
-    // QSettings settings("FractalWave", "FractalWave");
-    QString dir = settings.value("musicFolder", "").toString();
-    if (dir.isEmpty()) {
+
+    QString dir;
+    if (!readMusicFolder(dir))
+        return false;
+
+    if (!validateDirectory(dir))
+        return false;
+
+    currentMusicDirectory = dir;
+    settings.setValue("musicFolder", dir);
+
+
+    // 2) Prune per‑saved playlists JSON
+    QJsonObject root;
+    if (loadJson(root)) {
+        // 1) Gather audio files and populate master playlist
+        QStringList fileList = listAudioFiles(dir);
+        if (!populateMasterPlaylist(fileList, root))
+            return false;
+
+        prunePlaylists(root, dir);
+
+        saveJson(root);
+
+        // update lastPlaylistPlayed even if nothing changed
+        lastPlaylistPlayed = root.value("last_playlist_in_queue")
+                                 .toArray().at(0).toString();
+    }
+
+    return true;
+}
+
+// ——— Helpers ———
+
+bool LibraryManager::readMusicFolder(QString &outDir)
+{
+    outDir = settings.value("musicFolder", "").toString();
+    if (outDir.isEmpty()) {
         qDebug() << "Directory in QSettings is empty";
         return false;
     }
+    qDebug() << "Configured music dir:" << outDir;
+    return true;
+}
 
-    qDebug() << " current music dir in scanDirectory():" << dir;
-
-    QDir musicDir(dir);
-    if (!musicDir.exists()) {
-        qDebug() << "Directory doesn't exist in device";
+bool LibraryManager::validateDirectory(const QString &dir)
+{
+    QDir d(dir);
+    if (!d.exists()) {
+        qDebug() << "Directory doesn't exist on disk:" << dir;
         return false;
     }
+    qDebug() << "Validated music directory:" << dir;
+    return true;
+}
 
-    // Persist back
-    settings.setValue("musicFolder", dir);
-    currentMusicDirectory = dir;
+QStringList LibraryManager::listAudioFiles(const QString &dir)
+{
+    static const QStringList nameFilters = { "*.mp3", "*.wav", "*.flac", "*.ogg", "*.opus" };
+    QDir d(dir);
+    QStringList files = d.entryList(nameFilters, QDir::Files | QDir::NoSymLinks, QDir::Name);
+    qDebug() << "Found" << files.size() << "audio files";
+    return files;
+}
 
-    qDebug() << "currentMusicDirectory in scanDirectory():" << currentMusicDirectory;
-
-    // 1) Scan folder for audio files
-    const QStringList nameFilters = { "*.mp3", "*.wav", "*.flac", "*.ogg", ".opus" };
-    // note: pass filters, flags, then sort
-    QStringList fileList = musicDir.entryList(
-        nameFilters,
-        QDir::Files | QDir::NoSymLinks,
-        QDir::Name
-        );
-
+bool LibraryManager::populateMasterPlaylist(const QStringList &fileNames, QJsonObject &root)
+{
+    // 1) Clear & refill in‑memory playlist
     masterPlaylist->clear();
     masterPlaylist->setName("All Songs");
+    if (fileNames.isEmpty())
+        return false;
 
-    QSet<QString> validPaths;
-    validPaths.reserve(fileList.size());
-
-    for (const QString& fname : fileList) {
-        QString fullPath = musicDir.absoluteFilePath(fname);
-        validPaths.insert(fullPath);
-
+    QDir d(currentMusicDirectory);
+    for (const auto &fname : fileNames) {
+        QString fullPath = d.absoluteFilePath(fname);
         Track t;
         t.filePath = fullPath;
         t.title    = QFileInfo(fullPath).baseName();
-        qDebug() << "fullPath in scanDirectory for loop" << t.filePath;
-        qDebug() << "title in scanDirectory for loop" << t.title;
         masterPlaylist->addTrack(t);
     }
 
-    if (masterPlaylist->getTracks().empty())
-        return false;
+    // 2) Update JSON: ensure we have a "playlists" object
+    QJsonObject pls = root.value("playlists").toObject();
 
-    // 2) Load playlists JSON
-    QJsonObject root;
-    if (!loadJson(root))
-        return true;  // no JSON to prune
+    qDebug() << "pls.keys()" << pls.keys();
 
-    QJsonObject pls = root.value(QStringLiteral("playlists")).toObject();
+    // Build an array of just the file paths
+    QJsonArray allSongsArray;
+    for (const auto &fname : fileNames) {
+        QString fullPath = fname;
+        allSongsArray.append(fullPath);
+    }
+
+    qDebug() << "allSongsArray:" << allSongsArray;
+
+    // Overwrite or create the "All Songs" entry
+    pls.insert("All Songs", allSongsArray);
+    root.insert("playlists", pls);
+
+    return true;
+}
+
+void LibraryManager::prunePlaylists(QJsonObject &root, const QString &musicDir)
+{
+    QJsonObject pls = root.value("playlists").toObject();
     bool modified = false;
+    QDir d(musicDir);
 
-    // 3) Prune each playlist
-    for (const QString& name : pls.keys()) {
+    for (const QString &name : pls.keys()) {
         QJsonArray oldArr = pls.value(name).toArray();
         QJsonArray newArr;
-
-        for (const QJsonValue& v : oldArr) {
+        for (const QJsonValue &v : oldArr) {
             QString trackName = v.toString();
-            if (musicDir.exists(trackName )) {
-                newArr.append(trackName );
-            }
+            if (d.exists(trackName))
+                newArr.append(trackName);
             else
                 modified = true;
         }
-
         if (newArr.size() != oldArr.size())
             pls[name] = newArr;
     }
 
     if (modified) {
-        root[QStringLiteral("playlists")] = pls;
-        saveJson(root);
+        root["playlists"] = pls;
+        qDebug() << "Pruned playlists JSON, saving changes";
+    } else {
+        qDebug() << "No playlist entries needed pruning";
     }
-
-    // Set lastPlaylistPlayed
-    lastPlaylistPlayed = root.value(QStringLiteral("last_playlist_in_queue")).toArray().at(0).toString();
-
-    return true;
 }
+
+
+// bool LibraryManager::scanDirectory()
+// {
+//     qDebug() << "Scanning directory";
+//     // QSettings settings("FractalWave", "FractalWave");
+//     QString dir = settings.value("musicFolder", "").toString();
+//     if (dir.isEmpty()) {
+//         qDebug() << "Directory in QSettings is empty";
+//         return false;
+//     }
+
+//     qDebug() << " current music dir in scanDirectory():" << dir;
+
+//     QDir musicDir(dir);
+//     if (!musicDir.exists()) {
+//         qDebug() << "Directory doesn't exist in device";
+//         return false;
+//     }
+
+//     // Persist back
+//     settings.setValue("musicFolder", dir);
+//     currentMusicDirectory = dir;
+
+//     qDebug() << "currentMusicDirectory in scanDirectory():" << currentMusicDirectory;
+
+//     // 1) Scan folder for audio files
+//     const QStringList nameFilters = { "*.mp3", "*.wav", "*.flac", "*.ogg", ".opus" };
+//     // note: pass filters, flags, then sort
+//     QStringList fileList = musicDir.entryList(
+//         nameFilters,
+//         QDir::Files | QDir::NoSymLinks,
+//         QDir::Name
+//         );
+
+//     masterPlaylist->clear();
+//     masterPlaylist->setName("All Songs");
+
+//     QSet<QString> validPaths;
+//     validPaths.reserve(fileList.size());
+
+//     for (const QString& fname : fileList) {
+//         QString fullPath = musicDir.absoluteFilePath(fname);
+//         validPaths.insert(fullPath);
+
+//         Track t;
+//         t.filePath = fullPath;
+//         t.title    = QFileInfo(fullPath).baseName();
+//         qDebug() << "fullPath in scanDirectory for loop" << t.filePath;
+//         qDebug() << "title in scanDirectory for loop" << t.title;
+//         masterPlaylist->addTrack(t);
+//     }
+
+//     if (masterPlaylist->getTracks().empty())
+//         return false;
+
+//     // 2) Load playlists JSON
+//     QJsonObject root;
+//     if (!loadJson(root))
+//         return true;  // no JSON to prune
+
+//     QJsonObject pls = root.value(QStringLiteral("playlists")).toObject();
+//     bool modified = false;
+
+//     // 3) Prune each playlist
+//     for (const QString& name : pls.keys()) {
+//         QJsonArray oldArr = pls.value(name).toArray();
+//         QJsonArray newArr;
+
+//         for (const QJsonValue& v : oldArr) {
+//             QString trackName = v.toString();
+//             if (musicDir.exists(trackName )) {
+//                 newArr.append(trackName );
+//             }
+//             else
+//                 modified = true;
+//         }
+
+//         if (newArr.size() != oldArr.size())
+//             pls[name] = newArr;
+//     }
+
+//     if (modified) {
+//         root[QStringLiteral("playlists")] = pls;
+//         saveJson(root);
+//     }
+
+//     // Set lastPlaylistPlayed
+//     lastPlaylistPlayed = root.value(QStringLiteral("last_playlist_in_queue")).toArray().at(0).toString();
+
+//     return true;
+// }
 
 
 
@@ -195,7 +330,7 @@ bool LibraryManager::addTrackToDIr(const QString& youtubeUrl)
     QString outputPath = (dotIndex != -1) ? inputPath .left(dotIndex) + ".ogg" : inputPath  + ".ogg";
 
     // 3) remux the .mp4 file into .ogg format
-    if (remuxVideo(inputPath, outputPath))
+    if (!remuxVideo(inputPath, outputPath))
     {
         QMessageBox::critical(nullptr, tr("FFmpeg remux failed"),
                               tr("Video file doesn't exist or is malformed."));
@@ -224,25 +359,54 @@ bool LibraryManager::addTrackToDIr(const QString& youtubeUrl)
     return true;
 }
 
-QString LibraryManager::getOutputFilename(const QString& ytdlpPath,
-                          const QString& youtubeUrl,
-                          const QString& outputFolder)
+// QString LibraryManager::getOutputFilename(const QString& ytdlpPath,
+//                           const QString& youtubeUrl,
+//                           const QString& outputFolder)
+// {
+//     qDebug() << "outputFolder in getOutputFilename():" << outputFolder;
+//     QProcess p;
+//     // Build the argument list
+//     QStringList args;
+//     args << "--get-filename"        // just print the filename
+//          << "-o" << "%(title)s.mp4"  // use clean template
+//          << youtubeUrl;
+
+//     p.start(ytdlpPath, args);
+//     if (!p.waitForFinished(-1))
+//         throw std::runtime_error("yt-dlp timed out");
+
+//     QString filename = QString::fromUtf8(p.readAllStandardOutput()).trimmed();
+//     // filename = sanitizeForFilename(filename);
+//     // prepend your desired folder
+//     return QDir(outputFolder).filePath(filename);
+// }
+
+QString LibraryManager::getOutputFilename(
+    const QString& ytdlpPath,
+    const QString& youtubeUrl,
+    const QString& outputFolder)
 {
-    qDebug() << "outputFolder in getOutputFilename():" << outputFolder;
     QProcess p;
-    // Build the argument list
+    // force utf‑8 from yt‑dlp
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("PYTHONIOENCODING", "utf-8");
+    p.setProcessEnvironment(env);
+
     QStringList args;
-    args << "--get-filename"        // just print the filename
-         << "-o" << "%(title)s.mp4"  // use clean template
+    args << "--get-filename"
+         << "--encoding" << "utf-8"
+         << "-o" << "%(title)s.mp4"
          << youtubeUrl;
 
     p.start(ytdlpPath, args);
     if (!p.waitForFinished(-1))
         throw std::runtime_error("yt-dlp timed out");
 
-    QString filename = QString::fromUtf8(p.readAllStandardOutput()).trimmed();
-    filename = sanitizeForFilename(filename);
-    // prepend your desired folder
+    // decode as UTF‑8 now that we forced yt-dlp to output it
+    QString filename = QString::fromUtf8(
+                           p.readAllStandardOutput()
+                           ).trimmed();
+
     return QDir(outputFolder).filePath(filename);
 }
 

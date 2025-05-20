@@ -92,29 +92,93 @@ public:
     void performFFT();
 
     // Different frequency bands for visualization
+    // enum FrequencyBand {
+    //     SubBass = 0,
+    //     Bass,
+    //     LowMid,
+    //     Mid,
+    //     UpperMid,
+    //     Presence,
+    //     Brilliance,
+    //     NumBands
+    // };
+
+    // // Defines the frequency range for each band
+    // struct BandRange { float min; float max; };
+
+    // // Static ranges for each band
+    // static constexpr std::array<BandRange, NumBands> bandRanges = {{
+    //     {20.0f, 60.0f},    // SubBass
+    //     {60.0f, 250.0f},   // Bass
+    //     {250.0f, 500.0f},  // LowMid
+    //     {500.0f, 2000.0f}, // Mid
+    //     {2000.0f, 4000.0f},// UpperMid
+    //     {4000.0f, 6000.0f},// Presence
+    //     {6000.0f, 20000.0f}// Brilliance
+    // }};
+
     enum FrequencyBand {
-        SubBass = 0,
-        Bass,
-        LowMid,
-        Mid,
-        UpperMid,
-        Presence,
-        Brilliance,
-        NumBands
+        Band0 = 0,
+        Band1,
+        Band2,
+        Band3,
+        Band4,
+        Band5,
+        Band6,
+        Band7,
+        Band8,
+        Band9,
+        Band10,
+        Band11,
+        Band12,
+        Band13,
+        Band14,
+        Band15,
+        NumBands   // = 16
     };
 
-    // Defines the frequency range for each band
+    // Closed‑form, precomputed min/max for each band
     struct BandRange { float min; float max; };
 
-    // Static ranges for each band
+    // static constexpr std::array<BandRange, NumBands> bandRanges = {{
+    //     {   20.00f,   20.00f * 1.5422108f    }, // Band0:  20.00 –  30.84 Hz
+    //     {   30.84f,   30.84f * 1.5422108f    }, // Band1:  30.84 –  47.52 Hz
+    //     {   47.52f,   47.52f * 1.5422108f    }, // Band2:  47.52 –  73.23 Hz
+    //     {   73.23f,   73.23f * 1.5422108f    }, // Band3:  73.23 – 112.92 Hz
+    //     {  112.92f,  112.92f * 1.5422108f    }, // Band4: 112.92 – 174.06 Hz
+    //     {  174.06f,  174.06f * 1.5422108f    }, // Band5: 174.06 – 268.19 Hz
+    //     {  268.19f,  268.19f * 1.5422108f    }, // Band6: 268.19 – 413.23 Hz
+    //     {  413.23f,  413.23f * 1.5422108f    }, // Band7: 413.23 – 636.76 Hz
+    //     {  636.76f,  636.76f * 1.5422108f    }, // Band8: 636.76 – 981.23 Hz
+    //     {  981.23f,  981.23f * 1.5422108f    }, // Band9: 981.23 –1513.70 Hz
+    //     { 1513.70f, 1513.70f * 1.5422108f    }, // Band10:1513.70 –2337.90 Hz
+    //     { 2337.90f, 2337.90f * 1.5422108f    }, // Band11:2337.90 –3617.10 Hz
+    //     { 3617.10f, 3617.10f * 1.5422108f    }, // Band12:3617.10 –5597.60 Hz
+    //     { 5597.60f, 5597.60f * 1.5422108f    }, // Band13:5597.60 –8660.20 Hz
+    //     { 8660.20f, 8660.20f * 1.5422108f    }, // Band14:8660.20 –13405.20 Hz
+    //     {13405.20f,             20000.0f      }  // Band15:13405.20 –20000.00 Hz
+    // }};
+
     static constexpr std::array<BandRange, NumBands> bandRanges = {{
-        {20.0f, 60.0f},    // SubBass
-        {60.0f, 250.0f},   // Bass
-        {250.0f, 500.0f},  // LowMid
-        {500.0f, 2000.0f}, // Mid
-        {2000.0f, 4000.0f},// UpperMid
-        {4000.0f, 6000.0f},// Presence
-        {6000.0f, 20000.0f}// Brilliance
+        // 14 bands from 20 → 500 Hz (ratio ≈ (500/20)^(1/14) ≈ 1.2585)
+        {  20.00f,   25.17f },  // Band0
+        {  25.17f,   31.68f },  // Band1
+        {  31.68f,   39.86f },  // Band2
+        {  39.86f,   50.17f },  // Band3
+        {  50.17f,   63.14f },  // Band4
+        {  63.14f,   79.46f },  // Band5
+        {  79.46f,  100.00f },  // Band6
+        { 100.00f,  125.85f },  // Band7
+        { 125.85f,  158.38f },  // Band8
+        { 158.38f,  199.32f },  // Band9
+        { 199.32f,  250.85f },  // Band10
+        { 250.85f,  315.69f },  // Band11
+        { 315.69f,  397.30f },  // Band12
+        { 397.30f,  500.00f },  // Band13
+
+        // 2 bands from 500 → 20 kHz (ratio ≈ √(20000/500) ≈ 6.3249)
+        { 500.00f, 3162.28f },  // Band14
+        {3162.28f,20000.00f }   // Band15
     }};
 
     // Get level of a specific frequency band
@@ -256,13 +320,13 @@ private:
 
         void transferFreqData() {
             // Retrieve frequency band levels.
-            float subBassLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::SubBass);
-            float bassLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Bass);
-            float lowMidLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::LowMid);
-            float midLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Mid);
-            float upperMidLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::UpperMid);
-            float presenceLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Presence);
-            float brillianceLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Brilliance);
+            float subBassLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band0);
+            float bassLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band1);
+            float lowMidLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band2);
+            float midLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band3);
+            float upperMidLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band4);
+            float presenceLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band5);
+            float brillianceLevel = audioPlayback->getFrequencyBandLevel(AudioPlayback::Band6);
 
             QString subBassLevelStr = QString::number(subBassLevel, 'f', 2);
             QString bassLevelStr = QString::number(bassLevel, 'f', 2);

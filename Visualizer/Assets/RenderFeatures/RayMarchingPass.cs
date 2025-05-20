@@ -26,9 +26,6 @@ class RayMarchingPass : ScriptableRenderPass
     {
         this.material = material;
 
-        // Create a full-screen quad or triangle mesh (identity UVs).
-        // fullScreenMesh = CoreUtils.CreateFullScreenMesh();
-
         // In your RayMarchingPass constructor:
         fullScreenMesh = new Mesh { name = "FullScreenQuad" };
 
@@ -89,9 +86,9 @@ class RayMarchingPass : ScriptableRenderPass
             Matrix4x4 invProj = cam.projectionMatrix.inverse;
             Vector3 camPos = cam.transform.position;
 
-            Debug.Log($"camToWorld in RecordRenderGraph: {camToWorld}");
-            Debug.Log($"invProj in RecordRenderGraph: {invProj}");
-            Debug.Log($"camPos in RecordRenderGraph: {camPos}");
+            // Debug.Log($"camToWorld in RecordRenderGraph: {camToWorld}");
+            // Debug.Log($"invProj in RecordRenderGraph: {invProj}");
+            // Debug.Log($"camPos in RecordRenderGraph: {camPos}");
 
             // Execution: draw full-screen triangle
             builder.SetRenderFunc((PassData data, RasterGraphContext ctx) =>

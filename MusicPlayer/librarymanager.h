@@ -29,6 +29,12 @@ public:
     /// Reads last folder from QSettings, scans it, and fills masterPlaylist.
     /// Returns true if the directory existed and contains at least one track.
     bool scanDirectory();
+
+    bool readMusicFolder(QString &outDir);
+    bool validateDirectory(const QString &dir);
+    QStringList listAudioFiles(const QString &dir);
+    bool populateMasterPlaylist(const QStringList &fileNames, QJsonObject &root);
+    void prunePlaylists(QJsonObject &root, const QString &musicDir);
     /// Make sure the JSON file exists on disk. Returns true on success.
     bool ensurePlaylistsFileExists();
 
