@@ -18,7 +18,7 @@ public:
 
     bool launchUnity();
     bool findUnityWindow();
-    static bool waitForUnityReadySignal(int timeoutMs = 10000);
+    static bool waitForUnityReadySignal(int timeoutMs = 20000);
     void embedUnity();
     void debugWindowHierarchy() const;
 

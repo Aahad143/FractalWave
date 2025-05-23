@@ -18,7 +18,7 @@ SettingsPage::SettingsPage(QWidget *parent, MediaController *externalMediaContro
     if (mediaController) {
         const QString cur = mediaController->currentMusicFolder();
         ui->selectDir->setText(cur.isEmpty() ? tr("Choose Music Folder…") : cur);
-        ui->currentDir->setText("Current Dir: "+mediaController->currentMusicFolder());
+        ui->currentDir->setText("Current Dir: "+ LibraryManager::instance().libraryManager().getCurrentMusicDirectory());
     }
 
 }

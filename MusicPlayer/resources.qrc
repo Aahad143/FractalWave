@@ -14,5 +14,27 @@
         <file>icons/play-button-white.png</file>
         <file>icons/pause-button.png</file>
         <file>icons/pause-button-white.png</file>
+        <file>fonts/Fira_Sans/FiraSans-Black.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-BlackItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Bold.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-BoldItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-ExtraBold.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-ExtraBoldItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-ExtraLight.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-ExtraLightItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Italic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Light.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-LightItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Medium.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-MediumItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Regular.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-SemiBold.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-SemiBoldItalic.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-Thin.ttf</file>
+        <file>fonts/Fira_Sans/FiraSans-ThinItalic.ttf</file>
+        <file>fonts/Fira_Sans/OFL.txt</file>
+        <file>icons/plus-icon.png</file>
+        <file>icons/playlist-icon.png</file>
+        <file>icons/queue-icon.png</file>
     </qresource>
 </RCC>

@@ -11,8 +11,8 @@ public:
     Playlist(const QString& playlistName);
 
     void addTrack(const Track& t)                               { tracks.push_back(t); }
-    const std::vector<Track>& getTracks() const     { return tracks; }
-    void clear()                                                                 {
+    std::vector<Track>& getTracks()                              { return tracks; }
+    void clear() {
         qDebug() <<"clearing tracks in Playlist:" << name;
         tracks.clear();
     }

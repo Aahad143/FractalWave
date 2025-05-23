@@ -190,6 +190,11 @@ public:
     // Access computed frequency band levels
     std::array<float, NumBands>& getFreqBands() { return frequencyBands; }
 
+    bool isTrackLoaded() const
+    {
+        return !currentTrackPath.isEmpty();
+    }
+
 private:
     // -------------------------------------------------------------------------
     // Internal Helpers for FFT

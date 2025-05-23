@@ -41,15 +41,25 @@ public:
     // bool loadPlaylist(QString playlistName);
     bool createAndSavePlaylist(const QString& playlistName);
     bool deletePlaylist(const QString& playlistName);
-    bool addTrackToPlaylist(const QString& playlistName, const QString& trackPath);
-    bool delTrackFromPlaylist(const QString& playlistName, const QString& trackPath);
+    bool addTrackToPlaylist(const QString& playlistName, const QString& trackName);
+    bool delTrackFromPlaylist(const QString& playlistName, const QString& trackName);
 
-    bool addTrackToDIr(const QString& trackPath);
+    bool addTrackToDIr(const QString& youtubeUrl);
     bool delTrackFromDir(const QString& trackPath);
 
     Playlist& getMasterPlaylist()         {return *masterPlaylist;}
+    Track* getTrackFromMasterPlaylist(const QString& trackPath)
+    {
+        for (Track &track : masterPlaylist->getTracks()) {
+            if (track.filePath == trackPath)
+            {
+                return &track;
+            }
+        }
+        return nullptr;
+    }
 
-    const QString& getCorrentMusicDirectory() {
+    const QString& getCurrentMusicDirectory() {
         return currentMusicDirectory;
     }
 
@@ -57,10 +67,7 @@ public:
         currentMusicDirectory = newDir;
     }
 
-    void setLastPlaylistPlayed(QString& playlistName){
-        lastPlaylistPlayed = playlistName;
-        settings.setValue("lastPlaylistPlayed", lastPlaylistPlayed);
-    }
+    void setLastPlaylistPlayed(const QString& playlistName);
 
     QString& getLastPlaylistPlayed(){
         return lastPlaylistPlayed;
@@ -69,6 +76,16 @@ public:
     QStringList getPlaylistNames();
     QStringList getTracksFromPlaylist(const QString& playlistName);
 
+    /// Helper to load the root JSON object from disk.
+    bool loadJson(QJsonObject& root);
+
+    /// Helper to write the root JSON object back to disk.
+    bool saveJson(const QJsonObject& root);
+
+    bool renamePlaylist(const QString& oldName,
+                        const QString& newName);
+
+    bool isTrackFavourite(Track* track) ;
 signals:
 
 private:
@@ -83,22 +100,22 @@ private:
     QString lastPlaylistPlayed;
 
     QString playlistsFilePath() const;
-
-    /// Helper to load the root JSON object from disk.
-    bool loadJson(QJsonObject& root);
-
-    /// Helper to write the root JSON object back to disk.
-    bool saveJson(const QJsonObject& root);
+    /// Extract title / artist / album / coverImage from an audio file
+    QString retrieveCoverImagePath(const QString& trackName);
+    Track extractMetadataForTrack(const QString& filePath);
 
     QString ffmpegPath_;
+    QString ffprobePath_;
     QString ytdlpPath_;
 
     QString getOutputFilename(const QString& ytdlpPath,
-                                              const QString& youtubeUrl,
-                                              const QString& outputFolder);
+                              const QString& youtubeUrl,
+                              const QString& outputFolder);
+
+    bool downloadCoverArt(const QString& youtubeUrl);
 
     bool downloadVideo(const QString& ytdlpPath,
-                                       const QString& youtubeUrl,
+                       const QString& youtubeUrl,
                        const QString& outputFolder);
 
     bool remuxVideo(const QString& inputPath, const QString& outputPath);

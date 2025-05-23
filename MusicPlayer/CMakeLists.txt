@@ -71,6 +71,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         helper/directoryhelper.h
         TrackItemDelegate.h TrackItemDelegate.cpp
         helper/delegatehelper.h
+        displayplaylists.h displayplaylists.cpp displayplaylists.ui
+        playlistitemdelegate.h
+        ClickableWIdget.h
+        playlistlistdelegate.h playlistlistdelegate.cpp
+        centeredicondelegate.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MusicPlayer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
