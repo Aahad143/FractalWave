@@ -34,10 +34,6 @@ bool LibraryManager::scanDirectory()
 
     QString dir;
     if (!readMusicFolder(dir))
-        return false;
-
-    if (!validateDirectory(dir))
-        return false;
 
     currentMusicDirectory = dir;
     settings.setValue("musicFolder", dir);
@@ -52,27 +48,10 @@ bool LibraryManager::scanDirectory()
             return false;
 
         prunePlaylists(root, dir);
-
-        qDebug() << "scanDirectory: after prunePlaylists:";
-
-        // update lastPlaylistPlayed even if nothing changed
-        QJsonArray queue = root.value("last_playlist_in_queue").toArray();
-        if (!queue.isEmpty()) {
-            lastPlaylistPlayed = queue.at(0).toString();
-        }
-
-        qDebug() << "scanDirectory: after lastPlaylistPlayed:";
-
-        saveJson(root);
-
-        qDebug() << "scanDirectory: after saveJson:";
     }
 
     return true;
 }
-
-// ——— Helpers ———
-
 bool LibraryManager::readMusicFolder(QString &outDir)
 {
     outDir = settings.value("musicFolder", "").toString();
@@ -95,118 +74,6 @@ bool LibraryManager::validateDirectory(const QString &dir)
     return true;
 }
 
-QStringList LibraryManager::listAudioFiles(const QString &dir)
-{
-    static const QStringList nameFilters = { "*.mp3", "*.wav", "*.flac", "*.ogg", "*.opus" };
-    QDir d(dir);
-    QStringList files = d.entryList(nameFilters, QDir::Files | QDir::NoSymLinks, QDir::Name);
-    qDebug() << "Found" << files.size() << "audio files";
-    return files;
-}
-
-QString LibraryManager::retrieveCoverImagePath(const QString& trackName)
-{
-    // 1) Determine the AppDataLocation where cover art and placeholder reside
-    QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir dir(dataDir);
-    if (!dir.exists())
-        return QString();
-
-    // 2) Build expected filename for this track
-    QString expected = trackName + ".jpg";
-    QFileInfo info(dir.filePath(expected));
-    if (info.exists() && info.isFile()) {
-        return info.absoluteFilePath();
-    }
-
-    // 3) Fallback scan: any file with this base name and a .jpg extension
-    QStringList matches = dir.entryList({ trackName + ".*" }, QDir::Files);
-    for (const QString& fname : matches) {
-        if (fname.endsWith(".jpg", Qt::CaseInsensitive)) {
-            return dir.filePath(fname);
-        }
-    }
-
-    // 4) Final fallback: placeholder_cover.jpg
-    QFileInfo placeholder(dir.filePath("placeholder_cover.jpg"));
-    if (placeholder.exists() && placeholder.isFile()) {
-        return placeholder.absoluteFilePath();
-    }
-
-    // 5) Nothing found
-    return QString();
-}
-
-Track LibraryManager::extractMetadataForTrack(const QString& filePath)
-{
-    Track t;
-    t.filePath = filePath;
-    t.title    = QFileInfo(filePath).baseName();
-    t.artist   = QString();
-    t.album    = QString();
-    t.coverImage = QString();
-
-    // Start ffprobe
-    QProcess probe;
-    QStringList args = {
-        "-v", "quiet",
-        "-print_format", "json",
-        "-show_format",
-        "-show_streams",
-        filePath
-    };
-    probe.start(ffprobePath_, args);
-    probe.waitForFinished();
-    QByteArray output = probe.readAllStandardOutput();
-
-    QJsonObject root = QJsonDocument::fromJson(output).object();
-
-    // Helper: Extract tag by checking multiple keys and case variants
-    auto getTagValue = [](const QJsonObject& tags, const QStringList& keys) -> QString {
-        for (const QString& key : keys) {
-            for (const QString& tagKey : tags.keys()) {
-                if (tagKey.compare(key, Qt::CaseInsensitive) == 0) {
-                    return tags.value(tagKey).toString().trimmed();
-                }
-            }
-        }
-        return {};
-    };
-
-    // 1. Check format-level tags
-    QJsonObject fmtTags = root.value("format").toObject().value("tags").toObject();
-    t.title  = getTagValue(fmtTags,  {"title"});
-    t.artist = getTagValue(fmtTags,  {"artist", "album_artist", "author"});
-    t.album  = getTagValue(fmtTags,  {"album"});
-
-    // 2. If still missing, check stream-level tags (especially for .ogg, .m4a, etc.)
-    if (t.title.isEmpty() || t.artist.isEmpty() || t.album.isEmpty()) {
-        QJsonArray streams = root.value("streams").toArray();
-        for (const QJsonValue& streamVal : streams) {
-            QJsonObject stream = streamVal.toObject();
-            QJsonObject streamTags = stream.value("tags").toObject();
-
-            if (t.title.isEmpty())
-                t.title = getTagValue(streamTags, {"title"});
-
-            if (t.artist.isEmpty())
-                t.artist = getTagValue(streamTags, {"artist", "album_artist", "author"});
-
-            if (t.album.isEmpty())
-                t.album = getTagValue(streamTags, {"album"});
-        }
-    }
-
-    // Optional: Fall back to filename if title still missing
-    if (t.title.isEmpty()) {
-        t.title = QFileInfo(filePath).baseName();
-    }
-
-    // Cover image
-    t.coverImage = retrieveCoverImagePath(t.title);
-    return t;
-}
-
 bool LibraryManager::populateMasterPlaylist(const QStringList &fileNames, QJsonObject &root)
 {
     // 1) Clear & refill in‑memory playlist
@@ -216,29 +83,7 @@ bool LibraryManager::populateMasterPlaylist(const QStringList &fileNames, QJsonO
         return false;
 
     QDir d(currentMusicDirectory);
-    for (const QString &fname : fileNames) {
-        QString fullPath = d.absoluteFilePath(fname);
-        Track t = extractMetadataForTrack(fullPath);
-        masterPlaylist->addTrack(t);
-    }
-
-    // 2) Update JSON: ensure we have a "playlists" object
-    QJsonObject pls = root.value("playlists").toObject();
-
-    // Build an array of just the file paths
-    QJsonArray allSongsArray;
-    for (const auto &fname : fileNames) {
-        QString fullPath = fname;
-        allSongsArray.append(fullPath);
-    }
-
-    // Overwrite or create the "All Songs" entry
-    pls.insert("All Songs", allSongsArray);
-    root.insert("playlists", pls);
-
-    return true;
-}
-
+  
 void LibraryManager::prunePlaylists(QJsonObject &root, const QString &musicDir)
 {
     QJsonObject pls = root.value("playlists").toObject();
@@ -360,8 +205,6 @@ bool LibraryManager::addTrackToDIr(const QString& youtubeUrl)
                              ? inputPath.left(dotIndex) + ".ogg"
                              : inputPath + ".ogg";
 
-    // ... rest of your remux + cleanup + scanDirectory() logic ...
-    if (!remuxVideo(inputPath, outputPath)) {
         QMessageBox::critical(nullptr, tr("FFmpeg remux failed"),
                               tr("Video file doesn't exist or is malformed."));
         return false;
