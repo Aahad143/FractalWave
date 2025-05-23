@@ -3,19 +3,23 @@
 #include <QApplication>
 #include <QMenu>
 #include <QAbstractItemView>
+#include <qfileinfo.h>
 
 #include "TrackItemDelegate.h"
 
-TrackItemDelegate::TrackItemDelegate(QObject* parent) :
+TrackItemDelegate::TrackItemDelegate(QObject* parent, Context ctx, MediaController* externalMediaController) :
     QStyledItemDelegate(parent),
+    context(ctx),
+    mediaController(externalMediaController),
     playIcon(QIcon(":resources/icons/play-button-white.png")),
     pauseIcon(QIcon(":resources/icons/pause-button-white.png")),
     favOn  (QIcon(":resources/icons/heart-filled.png")),
     favOff (QIcon(":resources/icons/heart-empty.png")),
     moreIcon(QIcon(":resources/icons/overflow.png"))
-    // lastMoreRect()
 {
 }
+
+static bool TrackItemDelegatetoggleSelect = false;
 
 void TrackItemDelegate::paint(QPainter* painter,
                               const QStyleOptionViewItem& option,
@@ -37,10 +41,25 @@ void TrackItemDelegate::paint(QPainter* painter,
     }
 
     // Fetch data from the model
-    QString title  = index.data(TitleRole       ).toString();
-    QString artist = index.data(ArtistRole      ).toString();
-    bool    fav    = index.data(IsFavoriteRole ).toBool();
+    Track* track = qvariant_cast<Track*>(index.data(Qt::UserRole));
+    QString title  = track->title;
+    QString artist = track->artist;
+    bool    fav    = index.data(IsFavouriteRole ).toBool();
     bool isPlaying = index.data(IsPlayingRole).toBool();
+
+    // 0) If this row is the currently playing track, give it a special highlight:
+    QString thisPath = track->filePath;
+    QString playing  = mediaController->getAudioPlayback()->getCurrentTrackPath();
+    if (!playing.isEmpty() && QFileInfo(playing).canonicalFilePath() ==
+                                  QFileInfo(thisPath).canonicalFilePath())
+    {
+        painter->fillRect(option.rect, hover);
+    }
+    else
+    {
+        isPlaying = false;
+        painter->fillRect(option.rect, option.palette.base());
+    }
 
     // Compute sub-rectangles
     QRect r = option.rect.adjusted(margin, margin, -margin, -margin);
@@ -65,7 +84,9 @@ void TrackItemDelegate::paint(QPainter* painter,
     // Draw the overflow icon
     moreIcon.paint(painter, moreRect);
     // Draw heart icon
-    (fav ? favOn : favOff).paint(painter, heartRect);
+    if (context != Favourites) {
+        (fav ? favOn : favOff).paint(painter, heartRect);
+    }
 
     // 7) Draw the text
     painter->setPen(option.palette.text().color());
@@ -75,7 +96,7 @@ void TrackItemDelegate::paint(QPainter* painter,
 
     // if this index is hovered OVER the more icon, draw a little circle behind it
     if (index == hoverOverflowIndex) {
-        QColor hi = option.palette.highlight().color();
+        QColor hi(192, 192, 192); // RGB values for medium grey
         hi.setAlpha(60);
         painter->setBrush(hi);
         painter->setPen(Qt::NoPen);
@@ -100,6 +121,7 @@ bool TrackItemDelegate::editorEvent(QEvent* event,
     QRect r = option.rect.adjusted(margin, margin, -margin, -margin);  // same adjusted rect as in paint()
     QRect playRect(r.left() + margin, r.top() + (iconSize/2) -2, iconSize, iconSize);
     QRect moreRect(r.right() - (iconSize + margin/4), r.top() + (iconSize/2), iconSize, iconSize);
+    QRect heartRect(r.right() - (iconSize*2 + margin*2), r.top() + (iconSize/2), iconSize, iconSize);
 
     auto *viewWidget = const_cast<QWidget*>(option.widget);
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(viewWidget);
@@ -171,17 +193,14 @@ bool TrackItemDelegate::editorEvent(QEvent* event,
         {
             // 1) Build the menu
             QMenu menu;
-            menu.addAction("Select", [=]{
-                QString trackPath = index.data(Qt::UserRole).toString();
-                emit overflowActionRequested(index, "select_mode", trackPath);
+            Track* track = qvariant_cast<Track*>(index.data(Qt::UserRole));
+            QString trackName = QFileInfo(track->filePath).fileName();
+            qDebug() << "trackName" << trackName;
+            menu.addAction("Add/Remove in Playlist", [=]{
+                emit overflowActionRequested(index, OverflowCommand::AddToPlaylist, trackName);
             });
-            menu.addAction("Add to Playlist", [=]{
-                QString trackPath = index.data(Qt::UserRole).toString();
-                emit overflowActionRequested(index, "add_to_playlist", trackPath);
-            });
-            menu.addAction("Delete", [=]{
-                QString trackPath = index.data(Qt::UserRole).toString();
-                emit overflowActionRequested(index, "delete", trackPath);
+            menu.addAction("Delete", [=] {
+                emit overflowActionRequested(index, OverflowCommand::Delete, trackName);
             });
 
             // 2) Map the icon’s top‐left to global coordinates
@@ -190,6 +209,11 @@ bool TrackItemDelegate::editorEvent(QEvent* event,
             menu.exec(globalPos);
 
             // We handled it; stop further processing
+            return true;
+        }
+
+        if (heartRect.contains(pos)) {
+            emit favouritesIconClicked(index);
             return true;
         }
 

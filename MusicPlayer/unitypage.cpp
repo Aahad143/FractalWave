@@ -16,7 +16,7 @@ UnityPage::UnityPage(QWidget *parent)
     , unityEmbedder(nullptr)
 {
     ui->setupUi(this);
-
+    ui->label->hide();
     ui->loadingFrame->setFrameShape(QFrame::StyledPanel);
 
     embeddedFrame = new QFrame( this );    // 1) same parent
@@ -30,7 +30,11 @@ UnityPage::UnityPage(QWidget *parent)
     // Create the UnityEmbedder instance
     unityEmbedder = new UnityEmbedder(embeddedFrame, "Visualizer", "Visualizer.exe");
 
-    connect(ui->activateVisualizer, &QPushButton::pressed, this, &UnityPage::embedUnity);
+    connect(ui->activateVisualizer, &QPushButton::pressed, this, [=](){
+        ui->label->show();
+        ui->activateVisualizer->hide();
+        embedUnity();
+    });
 }
 
 // In UnityPage.cpp, outside of any function
@@ -93,6 +97,7 @@ void UnityPage::embedUnity(){
         connect(worker, &Worker::error, this, [this](const QString &err){
             qDebug() << "Error in Worker for UnityEmbedder:" << err;
             ui->label->setText("Error loading visualizer");
+            ui->activateVisualizer->show();
             m_unityEmbedded = false;
         });
 

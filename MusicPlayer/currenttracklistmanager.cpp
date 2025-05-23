@@ -39,7 +39,7 @@ void CurrentTracklistManager::scanDirectory(const QString &directoryPath)
 
 void CurrentTracklistManager::initializePlaylist(const QString& playlistName)
 {
-    QDir musicDir(LibraryManager::instance().getCorrentMusicDirectory());
+    QDir musicDir(LibraryManager::instance().getCurrentMusicDirectory());
     // 1) fetch the file-paths from LibraryManager
     QStringList trackNames =
         LibraryManager::instance().getTracksFromPlaylist(playlistName);

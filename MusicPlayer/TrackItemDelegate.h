@@ -5,17 +5,27 @@
 #include <QStyledItemDelegate>
 
 enum TrackRoles {
-    TitleRole       = Qt::UserRole + 1,
-    ArtistRole,
-    IsFavoriteRole,
-    IsPlayingRole
+    IsFavouriteRole       = Qt::UserRole + 1,
+    IsPlayingRole,
+    PlaylistRole
+};
+
+// 1) Define your enum (register it if you want QMetaEnum support)
+enum OverflowCommand {
+    AddToPlaylist,
+    Delete
+};
+
+enum Context{
+    Default,
+    Favourites
 };
 
 class TrackItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    explicit TrackItemDelegate(QObject* parent = nullptr);
+    explicit TrackItemDelegate(QObject* parent = nullptr, Context ctx = Default, MediaController* controller = nullptr);
 
     // paint the row
     void paint(QPainter* painter,
@@ -27,7 +37,7 @@ public:
                    const QModelIndex& index) const override
     {
         // fixed height, full available width
-        return { option.rect.width(), 60 };
+        return { 0, 60 };
     }
 
     // handle clicks on fav/overflow
@@ -37,8 +47,9 @@ public:
                      const QModelIndex& index) override;
 
 signals:
-    void overflowActionRequested(const QModelIndex& index, const QString& action, const QString& trackPath);
+    void overflowActionRequested(const QModelIndex& index, const OverflowCommand action, const QString& trackPath);
     void playIconClicked(const int row);
+    void favouritesIconClicked(const QModelIndex& index);
 
 private:
     QIcon playIcon, pauseIcon, favOn, favOff, moreIcon;
@@ -46,6 +57,11 @@ private:
     // mutable QRect lastMoreRect;
     const int margin = 8;
     const int iconSize = 24;
+
+    static bool toggleSelect;
+
+    Context context;
+    MediaController* mediaController;
 };
 
 #endif // TRACKITEMDELEGATE_H
